@@ -17,6 +17,8 @@ class GameState {
         this.render()
     }
 
+    isActive() { return this.status == 'started' }
+
     render() {
         this.elem = createDiv({ 
             id: 'game-state'
