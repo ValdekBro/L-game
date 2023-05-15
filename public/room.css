@@ -1,0 +1,59 @@
+.game-tiles-container {
+  display: grid;
+  grid-template-columns: 100px 100px 100px 100px;
+  grid-gap: 5px;
+  width: fit-content;
+  /* block-size: fit-content; */
+}
+.game-tiles-container .tile {
+  aspect-ratio: 1;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* 
+.game-tiles-container .tile .c {
+  display: none;
+}
+.game-tiles-container .tile.hint .c {
+  display: block;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  border-radius: 50%;
+  font-size: 50px;
+  color: yellowgreen;
+  text-align: center;
+  background: burlywood
+} */
+
+.game-tiles-container .tile.selected {
+  border: 10px solid green;
+}
+.game-tiles-container .tile.selected-y {
+  border: 10px solid darkslategray;
+}
+.game-tiles-container .tile.selected-r {
+  border: 10px solid red;
+}
+
+#game-state {
+  min-height: 44px;
+}
+
+#game #game-id {
+  display: none;
+}
+
+#game * {
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Old versions of Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */
+}
