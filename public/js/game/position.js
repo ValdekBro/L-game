@@ -17,6 +17,7 @@ class CoinPositionSelection extends Position {
     }
 
     isValid() {
+        if(!this.sourceTile || !this.targetTile) return false
         return this.sourceTile.occupation instanceof Coin && this.targetTile.occupation === null
     }
 
@@ -59,7 +60,7 @@ class LPosition extends Position {
     tiles = null
     constructor(tiles, playerId) {
         super(playerId)
-        this.tiles = tiles
+        this.tiles = tiles.filter(Boolean)
     }
 
     isOverloaded() {
@@ -103,6 +104,12 @@ class LPosition extends Position {
 
     }
 
+    isOutOfBorders() {
+        const rows = this.tiles.map(tile => tile.row)
+        const cols = this.tiles.map(tile => tile.col)
+        return rows.some(row => row < 1 || row > 4) || cols.some(col => col < 1 || col > 4)
+    }
+
     isEqual(lPosition) {
         return this.tiles
             .map((tile, i, tiles) => !!lPosition.tiles.find(t => t.isEqual(tile)))
@@ -111,7 +118,7 @@ class LPosition extends Position {
     }
 
     isValid() {
-        if(!(this.isFull() && !this.isOverloaded()))
+        if(!(this.isFull() && !this.isOverloaded() && !this.isOutOfBorders()))
             return false
 
         if(!this.isValidShape()) 
@@ -130,6 +137,10 @@ class LPosition extends Position {
             }
         )
         return validTilesPositions.reduce((prev, curr) => prev && curr, true)
+    }
+
+    isValidMoveFrom(originLPosition) {
+        return this.isValid() && !this.isEqual(originLPosition)
     }
 
     toggleHint() {
@@ -180,4 +191,82 @@ class LPositionSelection extends LPosition {
             tile.elem.removeClass('selected-r')
         })
     }
+}
+
+class PositionsFactory {
+
+    constructor(tilesContainer) {
+        this.tilesContainer = tilesContainer
+    }
+
+    /**
+     * 
+     * @param {*} headr - head tile row number
+     * @param {*} headc - head tile column number
+     * @param {*} type  - type of position:
+     *  'VB':          'BV':        'VT':         'TV':         'TH':              'BH':          'HT':            'HB':
+     *      *               *           * *             * *             *                                   *
+     *      *               *           *                 *             * * *           * * *           * * *           * * *
+     *      * *           * *           *                 *                             *                                   *
+     */
+    createLPosition(headr, headc, type, playerId) {
+        if(type == 'VB')
+            return new LPosition([
+                this.tilesContainer.tiles[`${headr}-${headc}`],
+                this.tilesContainer.tiles[`${headr}-${headc-1}`],
+                this.tilesContainer.tiles[`${headr-1}-${headc-1}`],
+                this.tilesContainer.tiles[`${headr-2}-${headc-1}`],
+            ], playerId)
+        else if(type == 'BV')
+            return new LPosition([
+                this.tilesContainer.tiles[`${headr}-${headc}`],
+                this.tilesContainer.tiles[`${headr}-${headc+1}`],
+                this.tilesContainer.tiles[`${headr-1}-${headc+1}`],
+                this.tilesContainer.tiles[`${headr-2}-${headc+1}`],
+            ], playerId)
+        else if(type == 'VT')
+            return new LPosition([
+                this.tilesContainer.tiles[`${headr}-${headc}`],
+                this.tilesContainer.tiles[`${headr}-${headc-1}`],
+                this.tilesContainer.tiles[`${headr+1}-${headc-1}`],
+                this.tilesContainer.tiles[`${headr+2}-${headc-1}`],
+            ], playerId)
+        else if(type == 'TV')
+            return new LPosition([
+                this.tilesContainer.tiles[`${headr}-${headc}`],
+                this.tilesContainer.tiles[`${headr}-${headc+1}`],
+                this.tilesContainer.tiles[`${headr+1}-${headc+1}`],
+                this.tilesContainer.tiles[`${headr+2}-${headc+1}`],
+            ], playerId)
+        else if(type == 'TH')
+            return new LPosition([
+                this.tilesContainer.tiles[`${headr}-${headc}`],
+                this.tilesContainer.tiles[`${headr+1}-${headc}`],
+                this.tilesContainer.tiles[`${headr+1}-${headc+1}`],
+                this.tilesContainer.tiles[`${headr+1}-${headc+2}`],
+            ], playerId)
+        else if(type == 'BH')
+            return new LPosition([
+                this.tilesContainer.tiles[`${headr}-${headc}`],
+                this.tilesContainer.tiles[`${headr-1}-${headc}`],
+                this.tilesContainer.tiles[`${headr-1}-${headc+1}`],
+                this.tilesContainer.tiles[`${headr-1}-${headc+2}`],
+            ], playerId)
+        else if(type == 'HT')
+            return new LPosition([
+                this.tilesContainer.tiles[`${headr}-${headc}`],
+                this.tilesContainer.tiles[`${headr+1}-${headc}`],
+                this.tilesContainer.tiles[`${headr+1}-${headc-1}`],
+                this.tilesContainer.tiles[`${headr+1}-${headc-2}`],
+            ], playerId)
+        else if(type == 'HB')
+            return new LPosition([
+                this.tilesContainer.tiles[`${headr}-${headc}`],
+                this.tilesContainer.tiles[`${headr-1}-${headc}`],
+                this.tilesContainer.tiles[`${headr-1}-${headc-1}`],
+                this.tilesContainer.tiles[`${headr-1}-${headc-2}`],
+            ], playerId)
+        else throw new Error('Invalid position type')
+    }
+
 }

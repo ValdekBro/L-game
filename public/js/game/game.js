@@ -1,61 +1,7 @@
-class TilesContainer {
-    elem = null
-
-    tiles = null
-
-    currentSelection = null
-
-    constructor() {
-        this.render()
-    }
-
-    render() {
-        this.elem = createDiv({
-            id: 'game-tiles-container'
-        })
-        this.elem.addClass('game-tiles-container')
-    }
-
-    // Layout init
-    createLayout() {
-        console.log('Creating game layout')
-        // For now, only default layout enabled
-        this.tiles = {
-            // Row 1
-            '1-1': new Tile(1, 1, new Coin()),
-            '1-2': new Tile(1, 2),
-            '1-3': new Tile(1, 3),
-            '1-4': new Tile(1, 4),
-            
-            // Row 2
-            '2-1': new Tile(2, 1),
-            '2-2': new Tile(2, 2),
-            '2-3': new Tile(2, 3),
-            '2-4': new Tile(2, 4),
-    
-            // Row 3
-            '3-1': new Tile(3, 1),
-            '3-2': new Tile(3, 2),
-            '3-3': new Tile(3, 3),
-            '3-4': new Tile(3, 4),
-    
-            // Row 4
-            '4-1': new Tile(4, 1),
-            '4-2': new Tile(4, 2),
-            '4-3': new Tile(4, 3),
-            '4-4': new Tile(4, 4, new Coin()),
-        }
-    }
-
-    clearSelection() {
-        this.currentSelection.hide()
-        this.currentSelection = null
-    }
-}
-
 class Game {
     elem = null
     tilesContainer = null
+    positionsFactory = null
 
     state = null
 
@@ -90,6 +36,8 @@ class Game {
         this.tilesContainer.createLayout()
         UserInput.createTilesSelectionListeners(this)
         Object.values(this.tilesContainer.tiles).map(tile => this.tilesContainer.elem.append(tile.elem))
+
+        this.positionsFactory = new PositionsFactory(this.tilesContainer)
         console.log('Game layout assigned')
 
         this.state = new GameState()
@@ -116,7 +64,10 @@ class Game {
 
             this.socket.on('leave', ({ room, id }) => {
                 console.log('Leave')
-                this.finish(this.state.playerId, 'Your opponent has left the game')
+                this.checkForWinners()
+
+                if(this.state.isActive())
+                    this.finish('Your opponent has left the game')
             })            
     
             this.socket.on('change-position', ({ playerId, position: rawPosition }) => {
@@ -159,18 +110,12 @@ class Game {
     }
 
     createPlayerInitialPosition(playerId) {
-        const position1 = new LPosition([
-            this.tilesContainer.tiles['1-2'],
-            this.tilesContainer.tiles['1-3'],
-            this.tilesContainer.tiles['2-2'],
-            this.tilesContainer.tiles['3-2'],
-        ], playerId)
-        const position2 = new LPosition([
-            this.tilesContainer.tiles['2-3'],
-            this.tilesContainer.tiles['3-3'],
-            this.tilesContainer.tiles['4-2'],
-            this.tilesContainer.tiles['4-3'],
-        ], playerId)
+        // For testing
+        const position1 = this.positionsFactory.createLPosition(2, 4, 'HB', playerId)
+        const position2 = this.positionsFactory.createLPosition(4, 1, 'BH', playerId)
+
+        // const position1 = this.positionsFactory.createLPosition(1, 3, 'VT', playerId)
+        // const position2 = this.positionsFactory.createLPosition(4, 2, 'BV', playerId)
         if(position1.isValid())
             return position1
         else
@@ -201,6 +146,8 @@ class Game {
             this.state.moveCoin(playerId, position)
             setTimeout(() => position.hide(), 1000)
             this.state.nextTurn()
+
+            this.checkForWinners()
         }
     }
 
@@ -209,11 +156,16 @@ class Game {
             this.state.removePosition(playerId)
             this.state.applyPosition(playerId, position)
             this.state.nextStage(
-                () => this.socket.emit('skip', { roomId: this.roomId, playerId: this.state.playerId })
+                () => {
+                    this.socket.emit('skip', { roomId: this.roomId, playerId: this.state.playerId })
+                    this.checkForWinners()
+                }
             )
         } else {
             this.state.moveCoin(playerId, position)
             this.state.nextTurn()
+
+            this.checkForWinners()
         }
 
         this.socket.emit('change-position', { roomId: this.roomId, playerId, position })
@@ -223,111 +175,33 @@ class Game {
         this.state.nextTurn()
     }
 
-    // toggleStageHints() {
-    //     if(this.state.stage === 1) {
-    //         this.state.playersPositions[this.state.turn].toggleHint()
-    //     } else {
-    //         Object.values(this.tilesContainer.tiles)
-    //             .filter(tile => tile.occupation instanceof Coin)
-    //             .forEach(tile => tile.elem.toggleHint())
-    //     }
-    // }
+    checkForWinners() {
+        const playersWithAvailableMoves = Object.keys(this.state.players).filter(playerId => this.hasAvailableMoves(playerId))
+        console.log("Players with available moves: ", playersWithAvailableMoves)
+        if(playersWithAvailableMoves.length < 2) {
+            const winner = playersWithAvailableMoves[0]
+            if(winner == this.state.playerId)
+                this.finish('You won!')
+            else
+                this.finish('You lost :(')
+        }
+    }
+    hasAvailableMoves(playerId) {
+        const variants = ['BV', 'TV', 'VB', 'VT', 'BH', 'TH', 'HB', 'HT']
+        return Object.values(this.tilesContainer.tiles).some(
+            tile => variants.some(
+                variant => this.positionsFactory
+                    .createLPosition(tile.row, tile.col, variant, playerId)
+                    .isValidMoveFrom(this.state.playersPositions[playerId])
+            )
+        )
+    }
 
-    finish(winnerId, message) {
-        this.state.status = 'finished'
+    finish(message) {
         this.socket.disconnect()
-        this.tilesContainer.elem.remove()
-        const winOrLoseLabel = this.state.playerId === winnerId ? 'You Win!' : 'You Lose :('
-        this.state.showMessage(`${winOrLoseLabel} ${message}`)
-    }
-}
-
-class UserInput {
-    static createTilesSelectionListeners(game) {
-        Object.values(game.tilesContainer.tiles).map(({ elem }) => {
-            elem.mousedown(function() {
-                const { r: row, c: col } = $(this).data('pos')
-                const tile = game.tilesContainer.tiles[`${row}-${col}`]
-                if(game.state.playerId !== game.state.turn)     
-                    console.log(game.state.playerId, game.state.turn)
-                if(game.state.status === 'started' && game.state.playerId === game.state.turn) {
-                    if(game.state.stage === 1) {
-                        game.tilesContainer.currentSelection = new LPositionSelection([tile], game.state.turn)
-                    } else {
-                        if(tile.occupation instanceof Coin)
-                            game.tilesContainer.currentSelection = new CoinPositionSelection(tile, game.state.turn)
-                    }
-                }
-            });
-            elem.mouseenter(function() {
-                const { r: row, c: col } = $(this).data('pos')
-                const tile = game.tilesContainer.tiles[`${row}-${col}`]
-                if(game.tilesContainer.currentSelection && game.tilesContainer.currentSelection.isActive) {
-                    if(game.tilesContainer.currentSelection instanceof LPositionSelection) {
-                        if(
-                            game.tilesContainer.currentSelection.tiles.length - 2  >= 0 &&
-                            tile.isEqual(
-                                game.tilesContainer.currentSelection.tiles[
-                                    game.tilesContainer.currentSelection.tiles.length - 2
-                                ]
-                            )
-                        ) {
-                            game.tilesContainer.currentSelection.removeTile(
-                                game.tilesContainer.currentSelection.tiles[
-                                    game.tilesContainer.currentSelection.tiles.length - 1
-                                ]
-                            )
-                        } else {
-                            if(!game.tilesContainer.currentSelection.isFull()
-                                && !(
-                                    game.tilesContainer.currentSelection.tiles[
-                                        game.tilesContainer.currentSelection.tiles.length - 1
-                                    ].row != tile.row
-                                    && game.tilesContainer.currentSelection.tiles[
-                                        game.tilesContainer.currentSelection.tiles.length - 1
-                                    ].col != tile.col
-                                ))
-                                game.tilesContainer.currentSelection.addTile(tile)
-                        }
-                    } else if(game.tilesContainer.currentSelection instanceof CoinPositionSelection) {
-                        game.tilesContainer.currentSelection.setTarget(tile)
-                    }
-                    
-                }
-            });
-        })
-        game.tilesContainer.elem.mouseleave(function() {
-            if(game.tilesContainer.currentSelection) 
-                game.tilesContainer.clearSelection()
-        });
-        game.elem.mouseup(function() {
-            if(game.tilesContainer.currentSelection) {
-                if(game.tilesContainer.currentSelection.isValid()) {
-                    if(game.state.stage === 1) {
-                        if(!(
-                            game.tilesContainer.currentSelection
-                                .isEqual(game.state.playersPositions[game.state.turn])
-                        ))
-                            game.changePosition(game.state.turn, game.tilesContainer.currentSelection)
-                    } else {
-                        if(!(
-                            game.tilesContainer.currentSelection.targetTile
-                                .isEqual(game.tilesContainer.currentSelection.sourceTile)
-                        ))
-                            game.changePosition(game.state.turn, game.tilesContainer.currentSelection)
-                    }
-                        
-                }
-
-                game.tilesContainer.clearSelection()
-            }
-        });
-    }
-    static createSkipStage2ButtonListeners(state, cb) {
-        state.message.click(function() {
-            state.nextTurn()
-            if(cb) cb()
-        })
+        // this.tilesContainer.elem.remove()
+        this.state.showMessage(message)
+        this.state.finish()
     }
 }
 
