@@ -1,6 +1,5 @@
 class GameState {
     elem = null
-    skipElem = null
 
     players = {}
     playersPositions = {}
@@ -51,15 +50,9 @@ class GameState {
     nextStage(onSkip) {
         this.stage = 2
         
-        this.skipElem = createH4({
-            id: 'skip-button'
-        })
-        
         if(this.turn === this.playerId) {
-            this.skipElem.text('Skip')
-            this.skipElem.addClass('pt-2')
+            this.showMessage('Move a Coin (Click to skip)')
             UserInput.createSkipStage2ButtonListeners(this, onSkip)
-            this.elem.append(this.skipElem)
         }
     }
     nextTurn() {
@@ -69,49 +62,31 @@ class GameState {
         else this.setTurn(playersIds[0])
         this.stage = 1
 
-        if(this.skipElem) {
-            this.skipElem.remove()
-            this.skipElem = null
-        }
-
         this.updateWaitLabel()
 
         Object.values(this.players).map(({ color }) => this.elem.toggleClass(color))
     }
 
     updateWaitLabel() {
-        if(this.turn !== this.playerId) {
-            this.waitElem = createH4({
-                id: 'wait-label'
-            })
-            this.waitElem.text('Wait for the opponent\'s move')
-            this.waitElem.addClass('pt-2')
-            this.elem.append(this.waitElem)
-        } else {
-            if(this.waitElem) {
-                this.waitElem.remove()
-                this.waitElem = null
-            }
-        }
+        if(this.turn !== this.playerId) 
+            this.showMessage('Wait for the opponent\'s move')
+        else 
+            this.showMessage('Make a move')
     }
 
     showMessage(message) {
-        this.hideMessages()
+        this.hideMessage()
         
-        const elem = createH4({})
-        elem.text(message)
-        elem.addClass('pt-2')
-        this.elem.append(elem)
+        this.message = createH4({})
+        this.message.text(message)
+        this.message.addClass('pt-2')
+        this.elem.append(this.message)
     }
 
-    hideMessages(message) {
-        if(this.skipElem) {
-            this.skipElem.remove()
-            this.skipElem = null
-        }
-        if(this.waitElem) {
-            this.waitElem.remove()
-            this.waitElem = null
+    hideMessage() {
+        if(this.message) {
+            this.message.remove()
+            this.message = null
         }
         this.elem.empty()
     }

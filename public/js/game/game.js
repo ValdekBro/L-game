@@ -102,7 +102,7 @@ class Game {
         this.state.elem.find('h4').addClass('text-dark')
 
         this.socket.on("connect", () => {
-            this.state.hideMessages()
+            this.state.hideMessage()
             this.state.playerId = this.socket.id
 
             this.socket.on('player-joined', ({ users }) => {
@@ -153,7 +153,7 @@ class Game {
     }
 
     start() {
-        this.state.hideMessages()
+        this.state.hideMessage()
         this.state.start()
         this.state.elem.addClass(this.state.players[this.state.turn].color)
     }
@@ -324,7 +324,7 @@ class UserInput {
         });
     }
     static createSkipStage2ButtonListeners(state, cb) {
-        state.skipElem.click(function() {
+        state.message.click(function() {
             state.nextTurn()
             if(cb) cb()
         })
