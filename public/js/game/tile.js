@@ -38,7 +38,7 @@ class Tile {
 
         this.elem.data('pos', { r: this.row, c: this.col })
         this.elem.addClass('tile')
-        this.elem.addClass('bg-primary')
+        this.elem.addClass('bg-tile-e')
         // this.elem.text(`${this.row}-${this.col}`)
         this.addOccupationClass()
     }
@@ -47,9 +47,9 @@ class Tile {
         let label = 'bg-white'
 
         if(this.occupation === null) {
-            label = 'bg-light'
+            label = 'bg-tile-e'
         } else if(this.occupation instanceof Coin) {
-            label = 'bg-secondary'
+            label = 'bg-dark selected-y'
         } else if(this.occupation instanceof Player) {
             const player = this.occupation
             label = player.color

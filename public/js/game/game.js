@@ -49,7 +49,7 @@ class Game {
         this.state.showMessage('Connecting...')
         this.state.elem.find('h4').addClass('text-dark')
 
-        this.socket.on("connect", () => {
+        this.socket.on("connect", async () => {
             this.state.hideMessage()
             this.state.playerId = this.socket.id
 
@@ -57,17 +57,16 @@ class Game {
                 users.forEach(userId => this.addPlayer(userId))
 
                 if(Object.keys(this.state.players).length < 2) {
-                    this.state.showMessage(`Share a page link to invite a player`)
-                    this.state.elem.find('h4').addClass('text-dark')
+                    this.state.showPopupButton(`Share a page link to invite a player`, 'Link copied to clipboard', event => navigator.clipboard.writeText(window.location.href))
                 }
             })
 
             this.socket.on('leave', ({ room, id }) => {
                 console.log('Leave')
-                this.checkForWinners()
-
-                if(this.state.isActive())
-                    this.finish('Your opponent has left the game')
+                if(this.state.isActive()) {
+                    this.finish('You won! Your opponent has left the game')
+                    LGameAPI.finishMatch(this.roomId)
+                }
             })            
     
             this.socket.on('change-position', ({ playerId, position: rawPosition }) => {
@@ -78,12 +77,14 @@ class Game {
                             rawPosition.tiles.map(tile => this.tilesContainer.tiles[tile.key]),
                             playerId
                         )
+                        position.hide()
                         this.updatePosition(playerId, position)
                     } else if(rawPosition.__typename === CoinPositionSelection.name) {
                         const position = new CoinPositionSelection(
                             this.tilesContainer.tiles[rawPosition.sourceTile.key],
                             playerId
                         )
+                        position.hide()
                         position.targetTile = this.tilesContainer.tiles[rawPosition.targetTile.key]
                         this.updatePosition(playerId, position)
                     }
@@ -97,8 +98,8 @@ class Game {
                 }
             })
         
-            this.socket.emit('join-room', { roomId: this.roomId });
-        
+            await this.socket.emit('join-room', { roomId: this.roomId });
+
             console.log('Game initialized')
         });
     }
@@ -121,9 +122,12 @@ class Game {
         else
             return position2
     }
-
+є
     addPlayer(playerId) {
         if(!Object.keys(this.state.players).find(id => id === playerId)) {
+            if(playerId == this.state.playerId)
+                LGameAPI.joinMatch(this.roomId)
+
             this.state.addPlayer(playerId)
 
             const initialPosition = this.createPlayerInitialPosition(playerId)
@@ -138,9 +142,11 @@ class Game {
         if(this.state.stage === 1) {
             this.state.removePosition(playerId)
             this.state.applyPosition(playerId, position)
-            setTimeout(() => position.hide(), 1000)
             this.state.nextStage(
-                () => this.socket.emit('skip', { roomId: this.roomId, playerId: this.state.playerId })
+                () => {
+                    this.socket.emit('skip', { roomId: this.roomId, playerId: this.state.playerId });
+                    this.elem.toggleClass('stage2')
+                }
             )
         } else {
             this.state.moveCoin(playerId, position)
@@ -149,6 +155,7 @@ class Game {
 
             this.checkForWinners()
         }
+        this.elem.toggleClass('stage2')
     }
 
     changePosition(playerId, position) {
@@ -167,12 +174,14 @@ class Game {
 
             this.checkForWinners()
         }
+        this.elem.toggleClass('stage2')
 
         this.socket.emit('change-position', { roomId: this.roomId, playerId, position })
     }
 
     skipStage2() {
         this.state.nextTurn()
+        this.elem.toggleClass('stage2')
     }
 
     checkForWinners() {
@@ -180,9 +189,10 @@ class Game {
         console.log("Players with available moves: ", playersWithAvailableMoves)
         if(playersWithAvailableMoves.length < 2) {
             const winner = playersWithAvailableMoves[0]
-            if(winner == this.state.playerId)
+            if(winner == this.state.playerId) {
                 this.finish('You won!')
-            else
+                LGameAPI.finishMatch(this.roomId)
+            } else
                 this.finish('You lost :(')
         }
     }
@@ -205,10 +215,14 @@ class Game {
     }
 }
 
-$(function() {
+const main = async () => {
+    const data = await LGameAPI.getUser()
+    $('#nickname').text(`${data.nickname} (${data.rating})`)
+
     console.log('Loaded')
     const gameElem = $('#game')
     const game = new Game(gameElem)
     game.init()
-})
+}
 
+$(() => { main().catch(e => { throw e }) })

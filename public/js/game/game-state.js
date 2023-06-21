@@ -13,11 +13,12 @@ class GameState {
     availablePlayersColors = null
 
     constructor() {
-        this.availablePlayersColors = ['bg-warning', 'bg-info']
+        this.availablePlayersColors = ['bg-primary', 'bg-danger']
         this.render()
     }
 
     isActive() { return this.status == 'started' }
+    isYourTurn() { return this.playerId == this.turn }
 
     render() {
         this.elem = createDiv({ 
@@ -30,6 +31,7 @@ class GameState {
         this.elem.addClass('mb-4')
         this.elem.addClass('container-fluid')
     }
+    
 
     start() {
         this.status = 'started'
@@ -49,12 +51,14 @@ class GameState {
         this.turn = id
         console.log(`Next turn for Player${id}`)
     }
-    nextStage(onSkip) {
+    nextStage(onSkip, onSecondStage) {
         this.stage = 2
         
         if(this.turn === this.playerId) {
-            this.showMessage('Move a Coin (Click to skip)')
-            UserInput.createSkipStage2ButtonListeners(this, onSkip)
+            this.showButton('Skip', () => {
+                this.nextTurn()
+                if(onSkip) onSkip()
+            })
         }
     }
     nextTurn() {
@@ -76,21 +80,44 @@ class GameState {
             this.showMessage('Make a move')
     }
 
-    showMessage(message) {
-        this.hideMessage()
-        
-        this.message = createH4({})
-        this.message.text(message)
-        this.message.addClass('pt-2')
-        this.elem.append(this.message)
-    }
 
     hideMessage() {
         if(this.message) {
+            this.message.popover('hide')
             this.message.remove()
             this.message = null
         }
         this.elem.empty()
+    }
+
+    updateMessage(elem, message) {
+        this.hideMessage()
+        
+        this.message = elem
+        this.message.text(message)
+        this.message.addClass('mt-2')
+        // this.message.addClass('text-dark')
+        this.elem.append(this.message)
+    }
+
+    showButton(message, onClick) {
+        this.updateMessage(
+            createClickableH4({}, onClick),
+            message
+        )
+    }
+    showPopupButton(message, popupContent, onClick) {
+        this.updateMessage(
+            createClickablePopover({}, popupContent, onClick)
+                .addClass('h5'),
+            message
+        )
+    }
+    showMessage(message) {
+        this.updateMessage(
+            createH4({}),
+            message
+        )
     }
 
     addPlayer(playerId) {

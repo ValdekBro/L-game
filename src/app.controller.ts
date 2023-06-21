@@ -8,6 +8,24 @@ export class AppController {
   @Inject(HttpAdapterHost) 
   httpServerRef: HttpAdapterHost
   
+  @Get('stats')
+  @Render('stats')
+  stats() {
+    return {};
+  }
+
+  @Get('login')
+  @Render('login')
+  login() {
+    return {};
+  }
+
+  @Get('signup')
+  @Render('register')
+  register() {
+    return {};
+  }
+
   @Get()
   @Render('menu')
   menu() {

@@ -1,7 +1,8 @@
 class UserInput {
     static createTilesSelectionListeners(game) {
         Object.values(game.tilesContainer.tiles).map(({ elem }) => {
-            elem.mousedown(function() {
+            elem.mousedown(function(event) {
+                event.preventDefault();
                 const { r: row, c: col } = $(this).data('pos')
                 const tile = game.tilesContainer.tiles[`${row}-${col}`]
                 if(game.state.playerId !== game.state.turn)     
@@ -79,10 +80,10 @@ class UserInput {
             }
         });
     }
-    static createSkipStage2ButtonListeners(state, cb) {
-        state.message.click(function() {
-            state.nextTurn()
-            if(cb) cb()
-        })
-    }
+    // static createSkipStage2ButtonListeners(state, cb) {
+    //     state.message.click(function() {
+    //         state.nextTurn()
+    //         if(cb) cb()
+    //     })
+    // }
 }

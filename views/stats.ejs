@@ -22,9 +22,33 @@
       <a class="col-4 h1" href="/">L-Game Online!</a>
       <a class="col-4 h5" id="login-nav-btn" href="/login">Login</a>
     </div>
-    <div id="game">
-      <div id="game-id"><%= roomId %></div>
-    </div>
+  </div>
+  <div id="stats" class="container-fluid">
+    <p class="h2">Top players:</p>
+    <table class="table table-dark table-hover table-striped">
+      <thead>
+        <tr>
+          <th scope="col">Nickname</th>
+          <!-- <th scope="col"># Games</th> -->
+          <th scope="col">Rating</th>
+        </tr>
+      </thead>
+      <tbody id="top-players-table">
+      </tbody>
+    </table>
+    <p class="h2">Games history:</p>
+    <table class="table table-dark table-hover table-striped">
+      <thead>
+        <tr>
+          <th scope="col">Date</th>
+          <th scope="col">P1</th>
+          <th scope="col">P2</th>
+          <th scope="col">Rating</th>
+        </tr>
+      </thead>
+      <tbody id="stats-table">
+      </tbody>
+    </table>
   </div>
 </body>
 <script
@@ -35,14 +59,5 @@
 <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
 <script src="/js/helpers/creds.js"></script>
 <script src="/js/api.js"></script>
-<script src="/js/game/tiles-container.js"></script>
-<script src="/js/game/user-input.js"></script>
-<script src="/js/game/game.js"></script>
-<script src="/js/game/game-state.js"></script>
-<script src="/js/game/position.js"></script>
-<script src="/js/game/coin.js"></script>
-<script src="/js/game/player.js"></script>
-<script src="/js/game/tile.js"></script>
-<script src="/js/helpers/index.js"></script>
-<script src="/socket.io/socket.io.js"></script>
+<script src="/js/stats.js"></script>
 </html>

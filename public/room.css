@@ -1,12 +1,26 @@
+@media only screen and (max-width : 490px) {
+  .game-tiles-container {
+    grid-template-columns: 20vmin 20vmin 20vmin 20vmin;
+  }
+}
+@media only screen and (min-width: 490px) {
+  .game-tiles-container {
+    grid-template-columns: 100px 100px 100px 100px;
+  }
+}
+
 .game-tiles-container {
   display: grid;
-  grid-template-columns: 100px 100px 100px 100px;
   grid-gap: 5px;
   width: fit-content;
   /* block-size: fit-content; */
 }
+
+
 .game-tiles-container .tile {
   aspect-ratio: 1;
+  transition-duration: 0.5s;
+  transition-timing-function: ease-in-out;
 }
 
 a {
@@ -31,17 +45,67 @@ a {
 } */
 
 .game-tiles-container .tile.selected {
-  border: 10px solid green;
+  transition: 0.3s;
+  border: 8px solid greenyellow;
+  cursor: cell;
 }
 .game-tiles-container .tile.selected-y {
-  border: 10px solid darkslategray;
+  transition: 0.08s;
+  border: 4px solid #454e5482;
+  cursor: cell;
+}
+.stage2 .game-tiles-container .tile.selected-y {
+  transition: 1s;
+  border: 10px solid #c0ad1d;
+  cursor: cell;
 }
 .game-tiles-container .tile.selected-r {
-  border: 10px solid red;
+  transition: 0.08s;
+  border: 8px solid rgb(255, 94, 94);
+  cursor: cell;
 }
 
 #game-state {
-  min-height: 44px;
+  min-height: 40px;
+}
+
+@media only screen and (max-width: 200px) {
+  #game-state h4, 
+  #game-state a,
+  #game-state div {
+    font-size: 0.5rem !important;
+  }
+
+  #game-state {
+    min-height: 44px;
+    margin: 0px !important;
+    padding: 0px !important;
+  }
+}
+@media only screen and (min-width: 200px) and (max-width: 500px) {
+  #game-state h4, 
+  #game-state a,
+  #game-state div {
+    font-size: 4vmin !important;
+  }
+}
+@media only screen and (min-width: 500px) {
+  #game-state h4, 
+  #game-state a,
+  #game-state div {
+    font-size: 1.1rem !important;
+  }
+}
+
+#game-state h4, 
+#game-state a,
+#game-state div {
+  font-weight: 700;
+}
+
+#game-state .clickable {
+  cursor: pointer;
+  /* text-decoration: underline; */
 }
 
 #game #game-id {
@@ -49,11 +113,42 @@ a {
 }
 
 #game * {
-  -webkit-touch-callout: none; /* iOS Safari */
     -webkit-user-select: none; /* Safari */
      -khtml-user-select: none; /* Konqueror HTML */
        -moz-user-select: none; /* Old versions of Firefox */
         -ms-user-select: none; /* Internet Explorer/Edge */
             user-select: none; /* Non-prefixed version, currently
                                   supported by Chrome, Edge, Opera and Firefox */
+}
+
+#menu-title * {
+  font-weight: 800;
+  color: whitesmoke
+}
+#menu-title #nickname, 
+#login label,
+#register label {
+  color: whitesmoke
+}
+
+@media only screen and (max-width: 600px) {
+  #login, #register {
+    width: 90%;
+  }
+}
+@media only screen and (min-width: 600px) {
+  #login, #register {
+    width: 50%;
+  }
+}
+
+#stats {
+  width: 95%;
+}
+#stats * {
+  color: whitesmoke
+}
+
+.bg-tile-e {
+  background-color: #454e5482;
 }
